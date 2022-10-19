@@ -1,0 +1,74 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+#  Summary of Bayesian Networks
+
+```{r pressure, echo=TRUE}
+####----V. Summary of Bayesian Networks----####
+p <- 10
+set.seed(50)
+myDAG <- randomDAG(p, prob = 0.2)
+if (require(Rgraphviz))
+{ plot(myDAG, main = "randomDAG(10, prob = 0.2)") }
+
+
+```
+# Generate 10000 samples of the DAG using standard normal error distribution
+
+```{r pressure, echo=TRUE}
+#2. Generate 10000 samples of the DAG using standard normal error distribution
+n <- 10000
+mydataset <- rmvDAG(n, myDAG, errDist = "normal")
+
+
+```
+# Use PC algorithm to learn the causal structure of the dataset.
+```{r pressure, echo=TRUE}
+
+#3. Use PC algorithm to learn the causal structure of the dataset.
+suffStat <- list(C = cor(mydataset)
+, n = nrow(mydataset))
+my.pc.fit <- pc(suffStat, indepTest = gaussCItest
+, p=ncol(mydataset), alpha = 0.01)
+plot(my.pc.fit@graph)
+
+```
+# Estimate the causal effects of node 2 on nodes 5,9.
+```{r pressure, echo=TRUE}
+
+#4. Estimate the causal effects of node 2 on nodes 5,9.
+idaFast(2, c(5,9), cov(mydataset), my.pc.fit@graph)
+
+```
+# Find the parent and children set of node 7 using pcSelect (the PC-Simple algorithm)
+```{r pressure, echo=TRUE}
+
+#5. Find the parent and children set of node 7 using
+# pcSelect (the PC-Simple algorithm)
+pcS <- pcSelect(mydataset[,7],mydataset[,-7], alpha = 0.05)
+pcS
+
+
+```
+# Find the parent and children set of node 7 using HITON-PC
+
+```{r pressure, echo=TRUE}
+#6. Find the parent and children set of node 7 using HITON-PC
+HITON.PC.7 <- learn.nbr(data.frame(mydataset),"X7"
+, method = "si.hiton.pc", alpha = 0.01)
+HITON.PC.7
+
+
+```
+# Learn the Markov blanket of node 7 from data
+
+```{r pressure, echo=TRUE}
+
+#7. Learn the Markov blanket of node 7 from data
+MB.X7 <- learn.mb(data.frame(mydataset),"X7"
+,method = "iamb", alpha = 0.01)
+MB.X7
+
+```
